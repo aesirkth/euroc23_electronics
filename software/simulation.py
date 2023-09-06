@@ -1,5 +1,5 @@
 import datetime
-from rocketpy import Environment, Rocket, HybridMotor, Flight
+from rocketpy import Environment, Rocket, SolidMotor, Flight
 import math
 from matplotlib import pyplot as plt
 
@@ -7,108 +7,83 @@ from matplotlib import pyplot as plt
 body_length = 1.70
 body_radius = 0.05
 
-
+ground_level = 165
 env = Environment(
-    railLength=12,
     latitude=39.3897,
     longitude=-8.28896388889,
-    elevation=165,
-    date=(2023, 8, 20, 14)
-)
-
-# env.setAtmosphericModel(type='Forecast', file='GFS')
-
-motor = HybridMotor(
-    thrustSource = 1300.0, # N
-    burnOut = 4, # s
-    grainNumber = 1,
-    grainDensity = 900, # kg/m3
-    grainOuterRadius = 0.0345, # m
-    grainInitialInnerRadius = 0.015, # m
-    grainInitialHeight = 0.270, # m
-    oxidizerTankRadius = 0.045, # m
-    oxidizerTankHeight = 0.860, # m
-    oxidizerInitialPressure = 40, # atmospheres?
-    oxidizerDensity = 1200.0, # kg/m3
-    oxidizerMolarMass = 44.01, # g/mol
-    oxidizerInitialVolume = math.pi * 0.045 ** 2 * 0.860,
-    distanceGrainToTank = 0.270 / 2,
-    injectorArea = 0.003 ** 2 * math.pi * 2,
-    # grainSeparation=0,
-    # nozzleRadius=0.0335,
-    # throatRadius=0.0114,
-    # reshapeThrustCurve=False,
-    # interpolationMethod="linear",
+    elevation=ground_level,
+    date=(2023, 10, 15, 12)
 )
 
 signy = Rocket(
-    motor=motor,
     radius=0.05,
-    mass=9,
-    inertiaI=6.60,
-    inertiaZ=0.0351,
-    distanceRocketNozzle=-1,
-    distanceRocketPropellant=-0.7,
-    powerOffDrag= 0.75,
-    powerOnDrag= 0.75,
+    mass= 7.920, # Rocket (no casing)
+    inertia=(4.6, 4.6, 0.015), # from open rocket
+    power_off_drag=0.58, # from open rocket
+    power_on_drag=0.59, # from open rocket
+    center_of_mass_without_motor=1.20,
+    coordinate_system_orientation="nose_to_tail"
 )
 
-signy.addNose(
-    length=0.6,
-    kind="conical",
-    distanceToCM=0.9
+pro75l2375 = SolidMotor(
+    thrust_source="Cesaroni_4864L2375-P.eng",
+    dry_mass = 1.840,
+    center_of_dry_mass = 0.65 / 2, #TODO (the total CG differs by 3cm to open rocket so this is pretty good)
+    dry_inertia = (0, 0, 0), #TODO
+    grains_center_of_mass_position = 0.65 / 2,
+    grain_number = 4,
+    grain_density = 1815, # from docs
+    grain_outer_radius = 0.033,
+    grain_initial_inner_radius = 0.015,
+    grain_initial_height = 0.12,
+    grain_separation = 0.005,
+    nozzle_radius = 0.033,
+    interpolation_method="linear",
+    coordinate_system_orientation="nozzle_to_combustion_chamber"
 )
 
-fin = signy.addTrapezoidalFins(
+signy.add_motor(pro75l2375, 2.475)
+
+signy.add_nose(
+    length=0.40,
+    kind="Von Karman",
+    position=0,
+)
+
+fins = signy.add_trapezoidal_fins(
     4,
-    span=0.087,
-    rootChord=0.18,
-    tipChord=0.09,
-    distanceToCM=-1.2
+    root_chord=0.18,
+    tip_chord=0.18,
+    span=0.08,
+    position=2.275,
+    sweep_angle=45
 )
 
-# fin.draw()
+# fins.draw()
 
-signy.setRailButtons([0.3, -0.4])
+signy.set_rail_buttons(155, 245)
 
-signy.addTail(
-    topRadius=0.0635,
-    bottomRadius=0.0435,
-    length=0.060,
-    distanceToCM=-1.194656
-)
-
-def drogueTrigger(p, y):
-    return True if y[5] < 0 else False
-
-def mainTrigger(p, y):
-    ret = True if y[5] < 0 and y[2] < 700 else False
-    return ret
+reefed_cd = 0.9
+reefed_radius = 0.4
+signy.add_parachute('Reefed',
+                    cd_s=reefed_cd * reefed_radius ** 2 * math.pi,
+                    trigger="apogee")
 
 
-
-signy.addParachute('Drogue',
-                              CdS=0.8 * 0.41 ** 2 * math.pi,
-                              trigger=drogueTrigger,
-                              samplingRate=105,
-                              lag=1.5,
-                              noise=(0, 8.3, 0.5))
-
-signy.addParachute('Main',
-                            CdS=1.5 * 1 ** 2 * math.pi,
-                            trigger=mainTrigger,
-                            samplingRate=105,
-                            lag=1.5,
-                            noise=(0, 8.3, 0.5))
+main_cd = 1.3
+main_radius = 0.98
+signy.add_parachute('Main',
+                    cd_s=main_cd * main_radius ** 2 * math.pi,
+                    trigger=300)
 
 
-test_flight = Flight(rocket=signy, environment=env, inclination=84, heading=90)
+test_flight = Flight(rocket=signy, environment=env, rail_length=12, inclination=86, heading=0)
 
-signy.allInfo()
-test_flight.allInfo()
-test_flight.animate()
-test_flight.plot3dTrajectory()
-test_flight.z.plot()
-test_flight.vz.plot()
-test_flight.az.plot()
-print(test_flight.parachuteEvents)
+signy.all_info()
+test_flight.all_info()
+# test_flight.animate()
+# test_flight.plot_3d_trajectory()
+# test_flight.z.plot()
+# test_flight.vz.plot()
+# test_flight.az.plot()
+# print(test_flight.parachute_events)
