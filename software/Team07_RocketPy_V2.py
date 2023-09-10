@@ -4,20 +4,19 @@ import math
 from matplotlib import pyplot as plt
 
 
-body_length = 1.70
-body_radius = 0.05
-
 ground_level = 165
 env = Environment(
     latitude=39.3897,
     longitude=-8.28896388889,
     elevation=ground_level,
-    date=(2023, 10, 15, 12)
+    date=(2023, 10, 15, 12),
 )
+
+env.set_atmospheric_model("custom_atmosphere", wind_u=-5, wind_v=-5)
 
 signy = Rocket(
     radius=0.05,
-    mass= 7.920, # Rocket (no casing)
+    mass= 8.298, # Rocket (no casing)
     inertia=(4.6, 4.6, 0.015), # from open rocket
     power_off_drag=0.58, # from open rocket
     power_on_drag=0.59, # from open rocket
@@ -28,8 +27,8 @@ signy = Rocket(
 pro75l2375 = SolidMotor(
     thrust_source="Cesaroni_4864L2375-P.eng",
     dry_mass = 1.840,
-    center_of_dry_mass = 0.65 / 2, #TODO (the total CG differs by 3cm to open rocket so this is pretty good)
-    dry_inertia = (0, 0, 0), #TODO
+    center_of_dry_mass = 0.325,
+    dry_inertia = (0.004591,  0.004591, 0.009183),
     grains_center_of_mass_position = 0.65 / 2,
     grain_number = 4,
     grain_density = 1815, # from docs
@@ -42,7 +41,7 @@ pro75l2375 = SolidMotor(
     coordinate_system_orientation="nozzle_to_combustion_chamber"
 )
 
-signy.add_motor(pro75l2375, 2.475)
+signy.add_motor(pro75l2375, 2.45)
 
 signy.add_nose(
     length=0.40,
@@ -55,34 +54,43 @@ fins = signy.add_trapezoidal_fins(
     root_chord=0.18,
     tip_chord=0.18,
     span=0.08,
-    position=2.275,
-    sweep_angle=45
+    position=2.29,
+    sweep_angle=135
 )
 
-# fins.draw()
+signy.set_rail_buttons(1.55, 2.45)
 
-signy.set_rail_buttons(155, 245)
+spill_radius = 0.4 / 2
 
-reefed_cd = 0.9
-reefed_radius = 0.4
+reefed_cd = 0.8
+reefed_radius = 0.7 / 2
 signy.add_parachute('Reefed',
-                    cd_s=reefed_cd * reefed_radius ** 2 * math.pi,
-                    trigger="apogee")
+                    cd_s=reefed_cd * math.pi * (reefed_radius ** 2 - spill_radius ** 2),
+                    trigger="apogee", lag=3)
 
 
-main_cd = 1.3
-main_radius = 0.98
+main_cd = 1.0
+main_radius = 2.13 / 2
 signy.add_parachute('Main',
-                    cd_s=main_cd * main_radius ** 2 * math.pi,
-                    trigger=300)
+                    cd_s=main_cd * math.pi * (main_radius ** 2 - spill_radius ** 2),
+                    trigger=200)
 
 
-test_flight = Flight(rocket=signy, environment=env, rail_length=12, inclination=86, heading=0)
 
-signy.all_info()
+# signy.all_info()
+
+# signy.evaluate_static_margin()
+# signy.evaluate_center_of_mass()
+# print("margin", signy.static_margin.get_value(0), signy.static_margin.get_value(4))
+# print("CoG", signy.center_of_mass.get_value(0), signy.center_of_mass.get_value(4))
+# print("CoP", signy.cp_position)
+
+
+test_flight = Flight(rocket=signy, environment=env, rail_length=12, inclination=84, heading=0)
+# fins.draw()
+# test_flight.animate()
 test_flight.all_info()
 # test_flight.animate()
-# test_flight.plot_3d_trajectory()
 # test_flight.z.plot()
 # test_flight.vz.plot()
 # test_flight.az.plot()
