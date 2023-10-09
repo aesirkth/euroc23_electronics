@@ -12,24 +12,24 @@ env = Environment(
     date=(2023, 10, 15, 12),
 )
 
-env.set_atmospheric_model("custom_atmosphere", wind_u=-5, wind_v=-5)
+env.set_atmospheric_model("custom_atmosphere", wind_u=0, wind_v=-10)
 
 signy = Rocket(
-    radius=0.05,
-    mass= 8.298, # Rocket (no casing)
+    radius=0.051,
+    mass= 9.275, # Rocket (no casing)
     inertia=(4.6, 4.6, 0.015), # from open rocket
     power_off_drag=0.58, # from open rocket
     power_on_drag=0.59, # from open rocket
-    center_of_mass_without_motor=1.20,
+    center_of_mass_without_motor=1.18,
     coordinate_system_orientation="nose_to_tail"
 )
 
 pro75l2375 = SolidMotor(
     thrust_source="Cesaroni_4864L2375-P.eng",
-    dry_mass = 1.840,
+    dry_mass = 1.604,
     center_of_dry_mass = 0.325,
     dry_inertia = (0.004591,  0.004591, 0.009183),
-    grains_center_of_mass_position = 0.65 / 2,
+    grains_center_of_mass_position = 0.325,
     grain_number = 4,
     grain_density = 1815, # from docs
     grain_outer_radius = 0.033,
@@ -58,7 +58,7 @@ fins = signy.add_trapezoidal_fins(
     sweep_angle=135
 )
 
-signy.set_rail_buttons(1.55, 2.45)
+signy.set_rail_buttons(1.48, 2.20)
 
 spill_radius = 0.4 / 2
 
