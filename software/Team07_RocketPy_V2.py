@@ -16,11 +16,11 @@ env.set_atmospheric_model("custom_atmosphere", wind_u=0, wind_v=-10)
 
 signy = Rocket(
     radius=0.051,
-    mass= 9.275, # Rocket (no casing)
+    mass= 9.625, # Rocket (no casing)
     inertia=(4.6, 4.6, 0.015), # from open rocket
     power_off_drag=0.58, # from open rocket
     power_on_drag=0.59, # from open rocket
-    center_of_mass_without_motor=1.18,
+    center_of_mass_without_motor=1.21,
     coordinate_system_orientation="nose_to_tail"
 )
 
@@ -54,8 +54,8 @@ fins = signy.add_trapezoidal_fins(
     root_chord=0.18,
     tip_chord=0.18,
     span=0.08,
-    position=2.29,
-    sweep_angle=135
+    position=2.26,
+    sweep_angle=35
 )
 
 signy.set_rail_buttons(1.48, 2.20)
@@ -77,7 +77,6 @@ signy.add_parachute('Main',
 
 
 
-# signy.all_info()
 
 # signy.evaluate_static_margin()
 # signy.evaluate_center_of_mass()
@@ -87,9 +86,13 @@ signy.add_parachute('Main',
 
 
 test_flight = Flight(rocket=signy, environment=env, rail_length=12, inclination=84, heading=0)
+signy.all_info()
+test_flight.all_info()
+
 # fins.draw()
 # test_flight.animate()
-test_flight.all_info()
+# test_flight.rocket.draw()
+
 # test_flight.animate()
 # test_flight.z.plot()
 # test_flight.vz.plot()
